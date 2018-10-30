@@ -38,9 +38,14 @@ public class UserController {
 
   @PostMapping(consumes = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE},
       produces = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE})
-  public UserRest createUser(@RequestBody final UserDetailsRequestModel userDetails) {
+  public UserRest createUser(@RequestBody final UserDetailsRequestModel userDetails)
+      throws Exception {
 
     final UserRest returnValue = new UserRest();
+
+    if (userDetails.getFirstName().isEmpty()) {
+      throw new NullPointerException("The object is null");
+    }
 
     final UserDto userDto = new UserDto();
 
