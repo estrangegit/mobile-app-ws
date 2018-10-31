@@ -1,5 +1,7 @@
 package com.appsdeveloperblog.app.ws.ui.controller;
 
+import java.util.ArrayList;
+import java.util.List;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -10,6 +12,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import com.appsdeveloperblog.app.ws.service.UserService;
 import com.appsdeveloperblog.app.ws.shared.dto.UserDto;
@@ -88,6 +91,23 @@ public class UserController {
 
     returnValue.setOperationName(RequestOperationName.DELETE.name());
     returnValue.setOperationResult(RequestOperationStatus.SUCCESS.name());
+
+    return returnValue;
+  }
+
+  @GetMapping(produces = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE})
+  public List<UserRest> getUsers(@RequestParam(value = "page", defaultValue = "0") final int page,
+      @RequestParam(value = "limit", defaultValue = "2") final int limit) {
+
+    final List<UserRest> returnValue = new ArrayList<>();
+
+    final List<UserDto> users = userService.getUsers(page, limit);
+
+    for (final UserDto userDto : users) {
+      final UserRest userModel = new UserRest();
+      BeanUtils.copyProperties(userDto, userModel);
+      returnValue.add(userModel);
+    }
 
     return returnValue;
   }
