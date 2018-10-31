@@ -45,7 +45,6 @@ public class UserServiceImpl implements UserService {
 
     final UserEntity storedUserDetails = userRepository.save(userEntity);
 
-
     final UserDto returnValue = new UserDto();
 
     BeanUtils.copyProperties(storedUserDetails, returnValue);
@@ -83,7 +82,7 @@ public class UserServiceImpl implements UserService {
     final UserEntity userEntity = userRepository.findByUserId(userId);
 
     if (userEntity == null) {
-      throw new UsernameNotFoundException(userId);
+      throw new UsernameNotFoundException("User with ID: " + userId + " not found");
     }
 
     final UserDto returnValue = new UserDto();
@@ -109,5 +108,18 @@ public class UserServiceImpl implements UserService {
     BeanUtils.copyProperties(updatedUserDetails, returnValue);
 
     return returnValue;
+  }
+
+  @Override
+  public void deleteUser(final String id) {
+
+    final UserDto returnValue = new UserDto();
+    final UserEntity userEntity = userRepository.findByUserId(id);
+
+    if (userEntity == null) {
+      throw new UserServiceException(ErrorMessages.NO_RECORD_FOUND.getErrorMessage());
+    }
+
+    userRepository.delete(userEntity);
   }
 }
