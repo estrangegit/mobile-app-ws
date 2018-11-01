@@ -1,8 +1,12 @@
 package com.appsdeveloperblog.app.ws.service.impl;
 
 import java.util.ArrayList;
+import java.util.List;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -45,7 +49,6 @@ public class UserServiceImpl implements UserService {
 
     final UserEntity storedUserDetails = userRepository.save(userEntity);
 
-
     final UserDto returnValue = new UserDto();
 
     BeanUtils.copyProperties(storedUserDetails, returnValue);
@@ -83,7 +86,7 @@ public class UserServiceImpl implements UserService {
     final UserEntity userEntity = userRepository.findByUserId(userId);
 
     if (userEntity == null) {
-      throw new UsernameNotFoundException(userId);
+      throw new UsernameNotFoundException("User with ID: " + userId + " not found");
     }
 
     final UserDto returnValue = new UserDto();
@@ -107,6 +110,42 @@ public class UserServiceImpl implements UserService {
     final UserEntity updatedUserDetails = userRepository.save(userEntity);
 
     BeanUtils.copyProperties(updatedUserDetails, returnValue);
+
+    return returnValue;
+  }
+
+  @Override
+  public void deleteUser(final String id) {
+
+    final UserDto returnValue = new UserDto();
+    final UserEntity userEntity = userRepository.findByUserId(id);
+
+    if (userEntity == null) {
+      throw new UserServiceException(ErrorMessages.NO_RECORD_FOUND.getErrorMessage());
+    }
+
+    userRepository.delete(userEntity);
+  }
+
+  @Override
+  public List<UserDto> getUsers(int page, final int limit) {
+
+    final List<UserDto> returnValue = new ArrayList<>();
+
+    if (page > 0)
+      page = page - 1;
+
+    final Pageable pageableRequest = PageRequest.of(page, limit);
+
+    final Page<UserEntity> usersPage = userRepository.findAll(pageableRequest);
+
+    final List<UserEntity> users = usersPage.getContent();
+
+    for (final UserEntity userEntity : users) {
+      final UserDto userDto = new UserDto();
+      BeanUtils.copyProperties(userEntity, userDto);
+      returnValue.add(userDto);
+    }
 
     return returnValue;
   }
