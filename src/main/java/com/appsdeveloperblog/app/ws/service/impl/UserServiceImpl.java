@@ -52,6 +52,8 @@ public class UserServiceImpl implements UserService {
     final String publicUserId = utils.generateUserId(30);
     userEntity.setEncryptedPassword(bCryptPasswordEncoder.encode(user.getPassword()));
     userEntity.setUserId(publicUserId);
+    userEntity.setEmailVerificationToken(Utils.generateEmailVerificationToken(publicUserId));
+    userEntity.setEmailVerificationStatus(false);
 
     final UserEntity storedUserDetails = userRepository.save(userEntity);
 
@@ -75,13 +77,16 @@ public class UserServiceImpl implements UserService {
 
   @Override
   public UserDetails loadUserByUsername(final String email) throws UsernameNotFoundException {
-    final UserEntity userEntity = userRepository.findByEmail(email);
+    UserEntity userEntity = userRepository.findByEmail(email);
 
     if (userEntity == null) {
       throw new UsernameNotFoundException(email);
     }
 
-    return new User(userEntity.getEmail(), userEntity.getEncryptedPassword(), new ArrayList<>());
+    // return new User(userEntity.getEmail(), userEntity.getEncryptedPassword(), new ArrayList<>());
+
+    return new User(userEntity.getEmail(), userEntity.getEncryptedPassword(),
+        userEntity.getEmailVerificationStatus(), true, true, true, new ArrayList<>());
   }
 
   @Override
@@ -150,6 +155,26 @@ public class UserServiceImpl implements UserService {
       final UserDto userDto = new UserDto();
       BeanUtils.copyProperties(userEntity, userDto);
       returnValue.add(userDto);
+    }
+
+    return returnValue;
+  }
+
+  @Override
+  public boolean verifyEmailToken(String token) {
+    boolean returnValue = false;
+
+    // Find user by token
+    UserEntity userEntity = userRepository.findUserByEmailVerificationToken(token);
+
+    if (userEntity != null) {
+      boolean hastokenExpired = Utils.hasTokenExpired(token);
+      if (!hastokenExpired) {
+        userEntity.setEmailVerificationToken(null);
+        userEntity.setEmailVerificationStatus(Boolean.TRUE);
+        userRepository.save(userEntity);
+        returnValue = true;
+      }
     }
 
     return returnValue;
