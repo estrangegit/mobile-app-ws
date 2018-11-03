@@ -1,12 +1,16 @@
 package com.appsdeveloperblog.app.ws.ui.controller;
 
+import static org.springframework.hateoas.mvc.ControllerLinkBuilder.linkTo;
+import static org.springframework.hateoas.mvc.ControllerLinkBuilder.methodOn;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 import org.modelmapper.ModelMapper;
 import org.modelmapper.TypeToken;
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.hateoas.Link;
+import org.springframework.hateoas.Resource;
+import org.springframework.hateoas.Resources;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -42,21 +46,20 @@ public class UserController {
 
   @GetMapping(path = "/{id}",
       produces = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE})
-  public UserRest getUser(@PathVariable final String id) {
+  public UserRest getUser(@PathVariable String id) {
 
-    final UserRest returnValue = new UserRest();
+    UserRest returnValue = new UserRest();
 
-    final UserDto userDto = userService.getUserByUserId(id);
+    UserDto userDto = userService.getUserByUserId(id);
 
-    BeanUtils.copyProperties(userDto, returnValue);
+    returnValue = modelMapper.map(userDto, UserRest.class);
 
     return returnValue;
   }
 
   @PostMapping(consumes = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE},
       produces = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE})
-  public UserRest createUser(@RequestBody final UserDetailsRequestModel userDetails)
-      throws Exception {
+  public UserRest createUser(@RequestBody UserDetailsRequestModel userDetails) throws Exception {
 
     UserRest returnValue = new UserRest();
 
@@ -64,7 +67,7 @@ public class UserController {
       throw new NullPointerException("The object is null");
     }
 
-    final UserDto userDto = modelMapper.map(userDetails, UserDto.class);
+    UserDto userDto = modelMapper.map(userDetails, UserDto.class);
 
     final UserDto createUser = userService.createUser(userDto);
 
@@ -77,23 +80,24 @@ public class UserController {
       consumes = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE},
       produces = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE})
   public UserRest updateUser(@PathVariable final String id,
-      @RequestBody final UserDetailsRequestModel userDetails) {
-    final UserRest returnValue = new UserRest();
+      @RequestBody UserDetailsRequestModel userDetails) {
 
-    final UserDto userDto = new UserDto();
+    UserRest returnValue = new UserRest();
 
-    BeanUtils.copyProperties(userDetails, userDto);
+    UserDto userDto = new UserDto();
+
+    userDto = modelMapper.map(userDetails, UserDto.class);
 
     final UserDto updateUser = userService.updateUser(id, userDto);
 
-    BeanUtils.copyProperties(updateUser, returnValue);
+    returnValue = modelMapper.map(updateUser, UserRest.class);
 
     return returnValue;
   }
 
   @DeleteMapping(path = "/{id}",
       produces = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE})
-  public OperationStatusModel deleteUser(@PathVariable final String id) {
+  public OperationStatusModel deleteUser(@PathVariable String id) {
 
     final OperationStatusModel returnValue = new OperationStatusModel();
 
@@ -106,16 +110,16 @@ public class UserController {
   }
 
   @GetMapping(produces = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE})
-  public List<UserRest> getUsers(@RequestParam(value = "page", defaultValue = "0") final int page,
-      @RequestParam(value = "limit", defaultValue = "2") final int limit) {
+  public List<UserRest> getUsers(@RequestParam(value = "page", defaultValue = "0") int page,
+      @RequestParam(value = "limit", defaultValue = "2") int limit) {
 
-    final List<UserRest> returnValue = new ArrayList<>();
+    List<UserRest> returnValue = new ArrayList<>();
 
-    final List<UserDto> users = userService.getUsers(page, limit);
+    List<UserDto> users = userService.getUsers(page, limit);
 
-    for (final UserDto userDto : users) {
-      final UserRest userModel = new UserRest();
-      BeanUtils.copyProperties(userDto, userModel);
+    for (UserDto userDto : users) {
+      UserRest userModel = new UserRest();
+      userModel = modelMapper.map(userDto, UserRest.class);
       returnValue.add(userModel);
     }
 
@@ -123,27 +127,51 @@ public class UserController {
   }
 
   // http://localhost:8080/mobile-app-ws/users/{userId}/addresses
-  @GetMapping(path = "/{id}/addresses",
-      produces = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE})
-  public List<AddressRest> getUserAddresses(@PathVariable final String id) {
+  @GetMapping(path = "/{id}/addresses", produces = {MediaType.APPLICATION_XML_VALUE,
+      MediaType.APPLICATION_JSON_VALUE, "application/hal+json"})
+  public Resources<AddressRest> getUserAddresses(@PathVariable final String id) {
 
-    List<AddressRest> returnValue = new ArrayList<AddressRest>();
+    List<AddressRest> addressesListRestModel = new ArrayList<AddressRest>();
 
-    final List<AddressDto> addressesDto = addressService.getAddressesByUserId(id);
+    List<AddressDto> addressesDto = addressService.getAddressesByUserId(id);
 
     if ((addressesDto != null) && !addressesDto.isEmpty()) {
-      final Type listType = new TypeToken<List<AddressRest>>() {}.getType();
-      returnValue = modelMapper.map(addressesDto, listType);
+      Type listType = new TypeToken<List<AddressRest>>() {}.getType();
+      addressesListRestModel = modelMapper.map(addressesDto, listType);
+
+      for (AddressRest addressRest : addressesListRestModel) {
+        Link addressLink =
+            linkTo(methodOn(UserController.class).getUserAddress(id, addressRest.getAddressId()))
+                .withSelfRel();
+        Link userLink = linkTo(methodOn(UserController.class).getUser(id)).withRel("user");
+
+        addressRest.add(addressLink);
+        addressRest.add(userLink);
+      }
     }
 
-    return returnValue;
+    return new Resources<>(addressesListRestModel);
   }
 
-  @GetMapping(path = "/{userId}/addresses/{addressId}",
-      produces = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE})
-  public AddressRest getUserAddress(@PathVariable final String addressId) {
+  @GetMapping(path = "/{userId}/addresses/{addressId}", produces = {MediaType.APPLICATION_XML_VALUE,
+      MediaType.APPLICATION_JSON_VALUE, "application/hal+json"})
+  public Resource<AddressRest> getUserAddress(@PathVariable String userId,
+      @PathVariable String addressId) {
 
-    final AddressDto addressesDto = addressService.getAddressByAddressId(addressId);
-    return modelMapper.map(addressesDto, AddressRest.class);
+    AddressDto addressesDto = addressService.getAddressByAddressId(addressId);
+
+    Link addressLink =
+        linkTo(methodOn(UserController.class).getUserAddress(userId, addressId)).withSelfRel();
+    Link userLink = linkTo(methodOn(UserController.class).getUser(userId)).withRel("user");
+    Link addressesLink =
+        linkTo(methodOn(UserController.class).getUserAddresses(userId)).withRel("addresses");
+
+    AddressRest addressRestModel = modelMapper.map(addressesDto, AddressRest.class);
+
+    addressRestModel.add(addressLink);
+    addressRestModel.add(userLink);
+    addressRestModel.add(addressesLink);
+
+    return new Resource<>(addressRestModel);
   }
 }
