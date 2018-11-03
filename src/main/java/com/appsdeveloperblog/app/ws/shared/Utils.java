@@ -10,7 +10,11 @@ public class Utils {
   private final Random RANDOM = new SecureRandom();
   private final String ALPHABET = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
-  public String generatedUserId(final int length) {
+  public String generateUserId(final int length) {
+    return generateRandomString(length);
+  }
+
+  public String generateAddressId(final int length) {
     return generateRandomString(length);
   }
 

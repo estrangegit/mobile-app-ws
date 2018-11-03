@@ -2,6 +2,7 @@ package com.appsdeveloperblog.app.ws.service.impl;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -17,6 +18,7 @@ import com.appsdeveloperblog.app.ws.io.entity.UserEntity;
 import com.appsdeveloperblog.app.ws.io.repositories.UserRepository;
 import com.appsdeveloperblog.app.ws.service.UserService;
 import com.appsdeveloperblog.app.ws.shared.Utils;
+import com.appsdeveloperblog.app.ws.shared.dto.AddressDto;
 import com.appsdeveloperblog.app.ws.shared.dto.UserDto;
 import com.appsdeveloperblog.app.ws.ui.model.response.ErrorMessages;
 
@@ -39,19 +41,21 @@ public class UserServiceImpl implements UserService {
       throw new RuntimeException("Record already exists");
     }
 
-    final UserEntity userEntity = new UserEntity();
+    for (final AddressDto addressDto : user.getAddresses()) {
+      addressDto.setUserDetails(user);
+      addressDto.setAddressId(utils.generateAddressId(30));
+    }
 
-    BeanUtils.copyProperties(user, userEntity);
+    final ModelMapper modelMapper = new ModelMapper();
+    final UserEntity userEntity = modelMapper.map(user, UserEntity.class);
 
-    final String publicUserId = utils.generatedUserId(30);
+    final String publicUserId = utils.generateUserId(30);
     userEntity.setEncryptedPassword(bCryptPasswordEncoder.encode(user.getPassword()));
     userEntity.setUserId(publicUserId);
 
     final UserEntity storedUserDetails = userRepository.save(userEntity);
 
-    final UserDto returnValue = new UserDto();
-
-    BeanUtils.copyProperties(storedUserDetails, returnValue);
+    final UserDto returnValue = modelMapper.map(storedUserDetails, UserDto.class);
 
     return returnValue;
   }
@@ -132,8 +136,9 @@ public class UserServiceImpl implements UserService {
 
     final List<UserDto> returnValue = new ArrayList<>();
 
-    if (page > 0)
+    if (page > 0) {
       page = page - 1;
+    }
 
     final Pageable pageableRequest = PageRequest.of(page, limit);
 

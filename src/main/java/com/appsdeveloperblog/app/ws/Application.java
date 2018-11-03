@@ -1,5 +1,6 @@
 package com.appsdeveloperblog.app.ws;
 
+import org.modelmapper.ModelMapper;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
@@ -33,5 +34,10 @@ public class Application extends SpringBootServletInitializer {
   @Bean
   public AppProperties appProperties() {
     return new AppProperties();
+  }
+
+  @Bean
+  public ModelMapper modelMapper() {
+    return new ModelMapper();
   }
 }
