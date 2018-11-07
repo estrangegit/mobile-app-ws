@@ -52,13 +52,27 @@ public class Utils {
   }
 
   public static String generateEmailVerificationToken(String userId) {
+    String token =
+        generateVerificationToken(userId, SecurityConstants.EMAIL_VERIFICATION_EXPIRATION_TIME);
+    return token;
+  }
+
+  public static String generatePasswordResetToken(String userId) {
+
+    String token =
+        generateVerificationToken(userId, SecurityConstants.PASSWORD_RESET_EXPIRATION_TIME);
+    return token;
+  }
+
+  private static String generateVerificationToken(String userId, long expirationTime) {
     // @formatter:off
     String token = Jwts.builder()
                     .setSubject(userId)
-                    .setExpiration(new Date(System.currentTimeMillis() + SecurityConstants.EXPIRATION_TIME))
+                    .setExpiration(new Date(System.currentTimeMillis() + expirationTime))
                     .signWith(SignatureAlgorithm.HS512, SecurityConstants.getTokenSecret())
                     .compact();
     // @formatter:on
     return token;
   }
+
 }
