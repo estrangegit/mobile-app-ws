@@ -40,11 +40,14 @@ public class UserServiceImpl implements UserService {
   @Autowired
   BCryptPasswordEncoder bCryptPasswordEncoder;
 
+  @Autowired
+  AmazonSES amazonSES;
+
   @Override
   public UserDto createUser(final UserDto user) {
 
     if (userRepository.findByEmail(user.getEmail()) != null) {
-      throw new RuntimeException("Record already exists");
+      throw new UserServiceException("Record already exists");
     }
 
     for (final AddressDto addressDto : user.getAddresses()) {
@@ -58,7 +61,7 @@ public class UserServiceImpl implements UserService {
     final String publicUserId = utils.generateUserId(30);
     userEntity.setEncryptedPassword(bCryptPasswordEncoder.encode(user.getPassword()));
     userEntity.setUserId(publicUserId);
-    userEntity.setEmailVerificationToken(Utils.generateEmailVerificationToken(publicUserId));
+    userEntity.setEmailVerificationToken(utils.generateEmailVerificationToken(publicUserId));
     userEntity.setEmailVerificationStatus(false);
 
     final UserEntity storedUserDetails = userRepository.save(userEntity);
@@ -66,7 +69,7 @@ public class UserServiceImpl implements UserService {
     final UserDto returnValue = modelMapper.map(storedUserDetails, UserDto.class);
 
     // Send an email message to user to verify their email address
-    new AmazonSES().verifyEmail(returnValue);
+    amazonSES.verifyEmail(returnValue);
 
     return returnValue;
   }
@@ -86,7 +89,7 @@ public class UserServiceImpl implements UserService {
 
   @Override
   public UserDetails loadUserByUsername(final String email) throws UsernameNotFoundException {
-    UserEntity userEntity = userRepository.findByEmail(email);
+    final UserEntity userEntity = userRepository.findByEmail(email);
 
     if (userEntity == null) {
       throw new UsernameNotFoundException(email);
@@ -170,14 +173,14 @@ public class UserServiceImpl implements UserService {
   }
 
   @Override
-  public boolean verifyEmailToken(String token) {
+  public boolean verifyEmailToken(final String token) {
     boolean returnValue = false;
 
     // Find user by token
-    UserEntity userEntity = userRepository.findUserByEmailVerificationToken(token);
+    final UserEntity userEntity = userRepository.findUserByEmailVerificationToken(token);
 
     if (userEntity != null) {
-      boolean hastokenExpired = Utils.hasTokenExpired(token);
+      final boolean hastokenExpired = Utils.hasTokenExpired(token);
       if (!hastokenExpired) {
         userEntity.setEmailVerificationToken(null);
         userEntity.setEmailVerificationStatus(Boolean.TRUE);
@@ -190,18 +193,18 @@ public class UserServiceImpl implements UserService {
   }
 
   @Override
-  public boolean requestPasswordReset(String email) {
+  public boolean requestPasswordReset(final String email) {
 
     boolean returnValue = false;
-    UserEntity userEntity = userRepository.findByEmail(email);
+    final UserEntity userEntity = userRepository.findByEmail(email);
 
     if (userEntity == null) {
       return false;
     }
 
-    String token = Utils.generatePasswordResetToken(userEntity.getUserId());
+    final String token = utils.generatePasswordResetToken(userEntity.getUserId());
 
-    PasswordResetTokenEntity passwordResetTokenEntity = new PasswordResetTokenEntity();
+    final PasswordResetTokenEntity passwordResetTokenEntity = new PasswordResetTokenEntity();
     passwordResetTokenEntity.setToken(token);
     passwordResetTokenEntity.setUserDetails(userEntity);
 
@@ -214,14 +217,14 @@ public class UserServiceImpl implements UserService {
   }
 
   @Override
-  public boolean resetPassword(String token, String password) {
+  public boolean resetPassword(final String token, final String password) {
     boolean returnValue = false;
 
     if (Utils.hasTokenExpired(token)) {
       return returnValue;
     }
 
-    PasswordResetTokenEntity passwordResetTokenEntity =
+    final PasswordResetTokenEntity passwordResetTokenEntity =
         passwordResetTokenRepository.findByToken(token);
 
     if (passwordResetTokenEntity == null) {
@@ -229,12 +232,12 @@ public class UserServiceImpl implements UserService {
     }
 
     // Prepare new password
-    String encodedPassword = bCryptPasswordEncoder.encode(password);
+    final String encodedPassword = bCryptPasswordEncoder.encode(password);
 
     // Update User password in database
-    UserEntity userEntity = passwordResetTokenEntity.getUserDetails();
+    final UserEntity userEntity = passwordResetTokenEntity.getUserDetails();
     userEntity.setEncryptedPassword(encodedPassword);
-    UserEntity savedUserEntity = userRepository.save(userEntity);
+    final UserEntity savedUserEntity = userRepository.save(userEntity);
 
     // Verify if password was saved successfully
     if ((savedUserEntity != null)

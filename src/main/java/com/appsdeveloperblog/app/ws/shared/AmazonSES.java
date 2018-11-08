@@ -1,5 +1,6 @@
 package com.appsdeveloperblog.app.ws.shared;
 
+import org.springframework.stereotype.Service;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.simpleemail.AmazonSimpleEmailService;
 import com.amazonaws.services.simpleemail.AmazonSimpleEmailServiceClientBuilder;
@@ -11,6 +12,7 @@ import com.amazonaws.services.simpleemail.model.SendEmailRequest;
 import com.amazonaws.services.simpleemail.model.SendEmailResult;
 import com.appsdeveloperblog.app.ws.shared.dto.UserDto;
 
+@Service
 public class AmazonSES {
   // This address must be verified with Amazon SES.
   final String FROM = "etienne.estrangin@gmail.com";
@@ -49,15 +51,17 @@ public class AmazonSES {
       + " http://localhost:8080/verification-service/password-reset.html?token=$tokenValue"
       + " Thank you!";
 
-  public void verifyEmail(UserDto userDto) {
+  public void verifyEmail(final UserDto userDto) {
 
-    AmazonSimpleEmailService client =
+    final AmazonSimpleEmailService client =
         AmazonSimpleEmailServiceClientBuilder.standard().withRegion(Regions.EU_WEST_1).build();
 
-    String htmlBodyWithToken = HTMLBODY.replace("$tokenValue", userDto.getEmailVerificationToken());
-    String textBodyWithToken = TEXTBODY.replace("$tokenValue", userDto.getEmailVerificationToken());
+    final String htmlBodyWithToken =
+        HTMLBODY.replace("$tokenValue", userDto.getEmailVerificationToken());
+    final String textBodyWithToken =
+        TEXTBODY.replace("$tokenValue", userDto.getEmailVerificationToken());
 
-    SendEmailRequest request = new SendEmailRequest()
+    final SendEmailRequest request = new SendEmailRequest()
         .withDestination(new Destination().withToAddresses(userDto.getEmail()))
         .withMessage(new Message()
             .withBody(
@@ -72,10 +76,11 @@ public class AmazonSES {
 
   }
 
-  public boolean sendPasswordResetRequest(String firstName, String email, String token) {
+  public boolean sendPasswordResetRequest(final String firstName, final String email,
+      final String token) {
     boolean returnValue = false;
 
-    AmazonSimpleEmailService client =
+    final AmazonSimpleEmailService client =
         AmazonSimpleEmailServiceClientBuilder.standard().withRegion(Regions.EU_WEST_1).build();
 
     String htmlBodyWithToken = PASSWORD_RESET_HTMLBODY.replace("$tokenValue", token);
@@ -84,7 +89,7 @@ public class AmazonSES {
     String textBodyWithToken = PASSWORD_RESET_TEXTBODY.replace("$tokenValue", token);
     textBodyWithToken = textBodyWithToken.replace("$firstName", firstName);
 
-    SendEmailRequest request = new SendEmailRequest()
+    final SendEmailRequest request = new SendEmailRequest()
         .withDestination(new Destination().withToAddresses(email))
         .withMessage(new Message()
             .withBody(
@@ -93,7 +98,7 @@ public class AmazonSES {
             .withSubject(new Content().withCharset("UTF-8").withData(PASSWORD_RESET_SUBJECT)))
         .withSource(FROM);
 
-    SendEmailResult result = client.sendEmail(request);
+    final SendEmailResult result = client.sendEmail(request);
     if ((result != null) && ((result.getMessageId() != null) && !result.getMessageId().isEmpty())) {
       returnValue = true;
     }

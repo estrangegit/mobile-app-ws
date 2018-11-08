@@ -3,14 +3,14 @@ package com.appsdeveloperblog.app.ws.shared;
 import java.security.SecureRandom;
 import java.util.Date;
 import java.util.Random;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import com.appsdeveloperblog.app.ws.security.SecurityConstants;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 
-@Component
+@Service
 public class Utils {
 
   private final Random RANDOM = new SecureRandom();
@@ -33,40 +33,40 @@ public class Utils {
     return new String(returnValue);
   }
 
-  public static boolean hasTokenExpired(String token) {
+  public static boolean hasTokenExpired(final String token) {
     boolean returnValue = false;
 
     try {
-      Claims claims = Jwts.parser().setSigningKey(SecurityConstants.getTokenSecret())
+      final Claims claims = Jwts.parser().setSigningKey(SecurityConstants.getTokenSecret())
           .parseClaimsJws(token).getBody();
 
-      Date tokenExpirationDate = claims.getExpiration();
-      Date todayDate = new Date();
+      final Date tokenExpirationDate = claims.getExpiration();
+      final Date todayDate = new Date();
 
       returnValue = tokenExpirationDate.before(todayDate);
-    } catch (ExpiredJwtException ex) {
+    } catch (final ExpiredJwtException ex) {
       returnValue = true;
     }
 
     return returnValue;
   }
 
-  public static String generateEmailVerificationToken(String userId) {
-    String token =
+  public String generateEmailVerificationToken(final String userId) {
+    final String token =
         generateVerificationToken(userId, SecurityConstants.EMAIL_VERIFICATION_EXPIRATION_TIME);
     return token;
   }
 
-  public static String generatePasswordResetToken(String userId) {
+  public String generatePasswordResetToken(final String userId) {
 
-    String token =
+    final String token =
         generateVerificationToken(userId, SecurityConstants.PASSWORD_RESET_EXPIRATION_TIME);
     return token;
   }
 
-  private static String generateVerificationToken(String userId, long expirationTime) {
+  private String generateVerificationToken(final String userId, final long expirationTime) {
     // @formatter:off
-    String token = Jwts.builder()
+    final String token = Jwts.builder()
                     .setSubject(userId)
                     .setExpiration(new Date(System.currentTimeMillis() + expirationTime))
                     .signWith(SignatureAlgorithm.HS512, SecurityConstants.getTokenSecret())
