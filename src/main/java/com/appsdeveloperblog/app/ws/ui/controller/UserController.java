@@ -43,25 +43,23 @@ public class UserController {
   @Autowired
   AddressService addressService;
 
-  @Autowired
-  ModelMapper modelMapper;
-
   @GetMapping(path = "/{id}",
       produces = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE})
-  public UserRest getUser(@PathVariable String id) {
+  public UserRest getUser(@PathVariable final String id) {
 
     UserRest returnValue = new UserRest();
 
-    UserDto userDto = userService.getUserByUserId(id);
+    final UserDto userDto = userService.getUserByUserId(id);
 
-    returnValue = modelMapper.map(userDto, UserRest.class);
+    returnValue = new ModelMapper().map(userDto, UserRest.class);
 
     return returnValue;
   }
 
   @PostMapping(consumes = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE},
       produces = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE})
-  public UserRest createUser(@RequestBody UserDetailsRequestModel userDetails) throws Exception {
+  public UserRest createUser(@RequestBody final UserDetailsRequestModel userDetails)
+      throws Exception {
 
     UserRest returnValue = new UserRest();
 
@@ -69,7 +67,9 @@ public class UserController {
       throw new NullPointerException("The object is null");
     }
 
-    UserDto userDto = modelMapper.map(userDetails, UserDto.class);
+    final ModelMapper modelMapper = new ModelMapper();
+
+    final UserDto userDto = modelMapper.map(userDetails, UserDto.class);
 
     final UserDto createUser = userService.createUser(userDto);
 
@@ -82,11 +82,13 @@ public class UserController {
       consumes = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE},
       produces = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE})
   public UserRest updateUser(@PathVariable final String id,
-      @RequestBody UserDetailsRequestModel userDetails) {
+      @RequestBody final UserDetailsRequestModel userDetails) {
 
     UserRest returnValue = new UserRest();
 
     UserDto userDto = new UserDto();
+
+    final ModelMapper modelMapper = new ModelMapper();
 
     userDto = modelMapper.map(userDetails, UserDto.class);
 
@@ -99,7 +101,7 @@ public class UserController {
 
   @DeleteMapping(path = "/{id}",
       produces = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE})
-  public OperationStatusModel deleteUser(@PathVariable String id) {
+  public OperationStatusModel deleteUser(@PathVariable final String id) {
 
     final OperationStatusModel returnValue = new OperationStatusModel();
 
@@ -112,14 +114,16 @@ public class UserController {
   }
 
   @GetMapping(produces = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE})
-  public List<UserRest> getUsers(@RequestParam(value = "page", defaultValue = "0") int page,
-      @RequestParam(value = "limit", defaultValue = "2") int limit) {
+  public List<UserRest> getUsers(@RequestParam(value = "page", defaultValue = "0") final int page,
+      @RequestParam(value = "limit", defaultValue = "2") final int limit) {
 
-    List<UserRest> returnValue = new ArrayList<>();
+    final List<UserRest> returnValue = new ArrayList<>();
 
-    List<UserDto> users = userService.getUsers(page, limit);
+    final List<UserDto> users = userService.getUsers(page, limit);
 
-    for (UserDto userDto : users) {
+    final ModelMapper modelMapper = new ModelMapper();
+
+    for (final UserDto userDto : users) {
       UserRest userModel = new UserRest();
       userModel = modelMapper.map(userDto, UserRest.class);
       returnValue.add(userModel);
@@ -135,17 +139,19 @@ public class UserController {
 
     List<AddressRest> addressesListRestModel = new ArrayList<AddressRest>();
 
-    List<AddressDto> addressesDto = addressService.getAddressesByUserId(id);
+    final List<AddressDto> addressesDto = addressService.getAddressesByUserId(id);
+
+    final ModelMapper modelMapper = new ModelMapper();
 
     if ((addressesDto != null) && !addressesDto.isEmpty()) {
-      Type listType = new TypeToken<List<AddressRest>>() {}.getType();
+      final Type listType = new TypeToken<List<AddressRest>>() {}.getType();
       addressesListRestModel = modelMapper.map(addressesDto, listType);
 
-      for (AddressRest addressRest : addressesListRestModel) {
-        Link addressLink =
+      for (final AddressRest addressRest : addressesListRestModel) {
+        final Link addressLink =
             linkTo(methodOn(UserController.class).getUserAddress(id, addressRest.getAddressId()))
                 .withSelfRel();
-        Link userLink = linkTo(methodOn(UserController.class).getUser(id)).withRel("user");
+        final Link userLink = linkTo(methodOn(UserController.class).getUser(id)).withRel("user");
 
         addressRest.add(addressLink);
         addressRest.add(userLink);
@@ -157,18 +163,20 @@ public class UserController {
 
   @GetMapping(path = "/{userId}/addresses/{addressId}", produces = {MediaType.APPLICATION_XML_VALUE,
       MediaType.APPLICATION_JSON_VALUE, "application/hal+json"})
-  public Resource<AddressRest> getUserAddress(@PathVariable String userId,
-      @PathVariable String addressId) {
+  public Resource<AddressRest> getUserAddress(@PathVariable final String userId,
+      @PathVariable final String addressId) {
 
-    AddressDto addressesDto = addressService.getAddressByAddressId(addressId);
+    final AddressDto addressesDto = addressService.getAddressByAddressId(addressId);
 
-    Link addressLink =
+    final ModelMapper modelMapper = new ModelMapper();
+
+    final Link addressLink =
         linkTo(methodOn(UserController.class).getUserAddress(userId, addressId)).withSelfRel();
-    Link userLink = linkTo(methodOn(UserController.class).getUser(userId)).withRel("user");
-    Link addressesLink =
+    final Link userLink = linkTo(methodOn(UserController.class).getUser(userId)).withRel("user");
+    final Link addressesLink =
         linkTo(methodOn(UserController.class).getUserAddresses(userId)).withRel("addresses");
 
-    AddressRest addressRestModel = modelMapper.map(addressesDto, AddressRest.class);
+    final AddressRest addressRestModel = modelMapper.map(addressesDto, AddressRest.class);
 
     addressRestModel.add(addressLink);
     addressRestModel.add(userLink);
@@ -182,12 +190,12 @@ public class UserController {
    */
   @GetMapping(path = "/email-verification",
       produces = {MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE})
-  public OperationStatusModel verifyEmailToken(@RequestParam(value = "token") String token) {
+  public OperationStatusModel verifyEmailToken(@RequestParam(value = "token") final String token) {
 
-    OperationStatusModel returnValue = new OperationStatusModel();
+    final OperationStatusModel returnValue = new OperationStatusModel();
     returnValue.setOperationName(RequestOperationName.VERIFY_EMAIL.name());
 
-    boolean isVerified = userService.verifyEmailToken(token);
+    final boolean isVerified = userService.verifyEmailToken(token);
 
     if (isVerified) {
       returnValue.setOperationResult(RequestOperationStatus.SUCCESS.name());
@@ -205,10 +213,10 @@ public class UserController {
       produces = {MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE},
       consumes = {MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE})
   public OperationStatusModel requestReset(
-      @RequestBody PasswordResetRequestModel passwordResetRequestModel) {
-    OperationStatusModel returnValue = new OperationStatusModel();
+      @RequestBody final PasswordResetRequestModel passwordResetRequestModel) {
+    final OperationStatusModel returnValue = new OperationStatusModel();
 
-    boolean operationResult =
+    final boolean operationResult =
         userService.requestPasswordReset(passwordResetRequestModel.getEmail());
 
     returnValue.setOperationName(RequestOperationName.REQUEST_PASSWORD_RESET.name());
@@ -223,10 +231,11 @@ public class UserController {
 
   @PostMapping(path = "/password-reset",
       consumes = {MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE})
-  public OperationStatusModel resetPassword(@RequestBody PasswordResetModel passwordResetModel) {
-    OperationStatusModel returnValue = new OperationStatusModel();
+  public OperationStatusModel resetPassword(
+      @RequestBody final PasswordResetModel passwordResetModel) {
+    final OperationStatusModel returnValue = new OperationStatusModel();
 
-    boolean operationResult =
+    final boolean operationResult =
         userService.resetPassword(passwordResetModel.getToken(), passwordResetModel.getPassword());
 
     returnValue.setOperationName(RequestOperationName.PASSWORD_RESET.name());
