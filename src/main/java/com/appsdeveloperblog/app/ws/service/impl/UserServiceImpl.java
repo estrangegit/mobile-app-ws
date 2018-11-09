@@ -180,7 +180,7 @@ public class UserServiceImpl implements UserService {
     final UserEntity userEntity = userRepository.findUserByEmailVerificationToken(token);
 
     if (userEntity != null) {
-      final boolean hastokenExpired = Utils.hasTokenExpired(token);
+      final boolean hastokenExpired = utils.hasTokenExpired(token);
       if (!hastokenExpired) {
         userEntity.setEmailVerificationToken(null);
         userEntity.setEmailVerificationStatus(Boolean.TRUE);
@@ -220,7 +220,7 @@ public class UserServiceImpl implements UserService {
   public boolean resetPassword(final String token, final String password) {
     boolean returnValue = false;
 
-    if (Utils.hasTokenExpired(token)) {
+    if (utils.hasTokenExpired(token)) {
       return returnValue;
     }
 
