@@ -34,6 +34,7 @@ import com.appsdeveloperblog.app.ws.ui.model.response.RequestOperationStatus;
 import com.appsdeveloperblog.app.ws.ui.model.response.UserRest;
 
 @RestController
+// @CrossOrigin(origins = "http://localhost:8080")
 @RequestMapping("/users") // http://localhost:8080/{server.servlet.context-path}/users
 public class UserController {
 

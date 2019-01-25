@@ -1,5 +1,7 @@
 package com.appsdeveloperblog.app.ws.security;
 
+import java.util.Arrays;
+import org.springframework.context.annotation.Bean;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -7,6 +9,9 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import com.appsdeveloperblog.app.ws.service.UserService;
 
 @EnableWebSecurity
@@ -24,7 +29,8 @@ public class WebSecurity extends WebSecurityConfigurerAdapter {
   @Override
   public void configure(final HttpSecurity http) throws Exception {
     // @formatter:off
-    http.csrf()
+    http.cors().and()
+        .csrf()
         .disable()
         .authorizeRequests()
         .antMatchers(HttpMethod.POST, SecurityConstants.SIGN_UP_URL)
@@ -58,5 +64,22 @@ public class WebSecurity extends WebSecurityConfigurerAdapter {
     final AuthenticationFilter filter = new AuthenticationFilter(authenticationManager());
     filter.setFilterProcessesUrl("/users/login");
     return filter;
+  }
+
+  @Bean
+  public CorsConfigurationSource corsConfigurationSource() {
+
+    final CorsConfiguration corsConfiguration = new CorsConfiguration();
+
+    corsConfiguration.setAllowedOrigins(Arrays.asList("*"));
+    corsConfiguration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE"));
+    corsConfiguration.setAllowCredentials(true);
+    corsConfiguration
+        .setAllowedHeaders(Arrays.asList("Authorization", "Cache-Control", "Content-Type"));
+
+    final UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+    source.registerCorsConfiguration("/**", corsConfiguration);
+
+    return source;
   }
 }
