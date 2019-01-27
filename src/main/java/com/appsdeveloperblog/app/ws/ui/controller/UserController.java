@@ -32,6 +32,9 @@ import com.appsdeveloperblog.app.ws.ui.model.response.AddressRest;
 import com.appsdeveloperblog.app.ws.ui.model.response.OperationStatusModel;
 import com.appsdeveloperblog.app.ws.ui.model.response.RequestOperationStatus;
 import com.appsdeveloperblog.app.ws.ui.model.response.UserRest;
+import io.swagger.annotations.ApiImplicitParam;
+import io.swagger.annotations.ApiImplicitParams;
+import io.swagger.annotations.ApiOperation;
 
 @RestController
 // @CrossOrigin(origins = "http://localhost:8080")
@@ -44,6 +47,13 @@ public class UserController {
   @Autowired
   AddressService addressService;
 
+  // @formatter:off
+  @ApiImplicitParams({
+    @ApiImplicitParam(name="authorization", value="${userController.authorizationHeader.description}", paramType="header")
+  })
+  @ApiOperation(value="${userController.GetUser.ApiOperation.Value}",
+                notes="${userController.GetUser.ApiOperation.Notes}")
+  // @formatter:on
   @GetMapping(path = "/{id}",
       produces = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE})
   public UserRest getUser(@PathVariable final String id) {
@@ -79,6 +89,11 @@ public class UserController {
     return returnValue;
   }
 
+  // @formatter:off
+  @ApiImplicitParams({
+    @ApiImplicitParam(name="authorization", value="${userController.authorizationHeader.description}", paramType="header")
+  })
+  // @formatter:on
   @PutMapping(path = "/{id}",
       consumes = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE},
       produces = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE})
@@ -100,6 +115,11 @@ public class UserController {
     return returnValue;
   }
 
+  // @formatter:off
+  @ApiImplicitParams({
+    @ApiImplicitParam(name="authorization", value="${userController.authorizationHeader.description}", paramType="header")
+  })
+  // @formatter:on
   @DeleteMapping(path = "/{id}",
       produces = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE})
   public OperationStatusModel deleteUser(@PathVariable final String id) {
@@ -114,6 +134,11 @@ public class UserController {
     return returnValue;
   }
 
+  // @formatter:off
+  @ApiImplicitParams({
+    @ApiImplicitParam(name="authorization", value="${userController.authorizationHeader.description}", paramType="header")
+  })
+  // @formatter:on
   @GetMapping(produces = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE})
   public List<UserRest> getUsers(@RequestParam(value = "page", defaultValue = "0") final int page,
       @RequestParam(value = "limit", defaultValue = "2") final int limit) {
@@ -134,6 +159,11 @@ public class UserController {
   }
 
   // http://localhost:8080/mobile-app-ws/users/{userId}/addresses
+  // @formatter:off
+  @ApiImplicitParams({
+    @ApiImplicitParam(name="authorization", value="${userController.authorizationHeader.description}", paramType="header")
+  })
+  // @formatter:on
   @GetMapping(path = "/{id}/addresses", produces = {MediaType.APPLICATION_XML_VALUE,
       MediaType.APPLICATION_JSON_VALUE, "application/hal+json"})
   public Resources<AddressRest> getUserAddresses(@PathVariable final String id) {
@@ -162,6 +192,11 @@ public class UserController {
     return new Resources<>(addressesListRestModel);
   }
 
+  // @formatter:off
+  @ApiImplicitParams({
+    @ApiImplicitParam(name="authorization", value="${userController.authorizationHeader.description}", paramType="header")
+  })
+  // @formatter:on
   @GetMapping(path = "/{userId}/addresses/{addressId}", produces = {MediaType.APPLICATION_XML_VALUE,
       MediaType.APPLICATION_JSON_VALUE, "application/hal+json"})
   public Resource<AddressRest> getUserAddress(@PathVariable final String userId,
